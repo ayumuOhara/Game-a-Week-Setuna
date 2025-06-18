@@ -1,15 +1,30 @@
+using NUnit.Framework;
 using System.Collections;
 using UnityEngine;
 
 public class GameManager : MonoBehaviour
 {
-    [SerializeField] GameObject player;
+    [SerializeField] EnemyStats enemyStats;
 
-    Animator animator;
+    [SerializeField] GameObject player;
+    [SerializeField] GameObject enemy;
+
+    Animator animatorPlayer;
+    Animator animatorEnemy;
+
+    enum STAGE
+    {
+        EASY,
+        NORMAL,
+        HARD,
+    }
+
+    [SerializeField] STAGE stage = STAGE.EASY;
 
     float rndTime = 0;
 
     float time = 0;
+    float enemyReactionTime = 0;
 
     const float WAIT_TIME_MIN = 1.2f;
     const float WAIT_TIME_MAX = 1.5f;
@@ -19,7 +34,7 @@ public class GameManager : MonoBehaviour
     {
         Application.targetFrameRate = 60;
 
-        animator = player.GetComponent<Animator>();
+        animatorPlayer = player.GetComponent<Animator>();
     }
 
     void Update()
@@ -34,6 +49,10 @@ public class GameManager : MonoBehaviour
     // ゲームスタート
     IEnumerator Timing()
     {
+        SetEnemy();
+        GameObject enemyObj = Instantiate(enemy);
+        animatorEnemy = enemyObj.GetComponent<Animator>();
+
         while (time < 3.0f)
         {
             Debug.Log($"開始まで【{3 - time}】");
@@ -53,6 +72,7 @@ public class GameManager : MonoBehaviour
             if (time >= rndTime && signalTime < 0)
             {
                 signalTime = Time.time; // 初回のみ記録
+                AttackEnemy();
                 Debug.Log("クリック！！");
             }
 
@@ -61,7 +81,7 @@ public class GameManager : MonoBehaviour
                 // 合図が出た後
                 if (Input.GetKeyDown(KeyCode.Space))
                 {
-                    Attack(Time.time - signalTime);
+                    AttackPlayer(Time.time - signalTime);
                     yield break;
                 }
             }
@@ -79,12 +99,58 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    // 勝敗判定
+    void WinnerChecker(float errorTime)
+    {
+        if(errorTime <= enemyReactionTime)
+        {
+            AnimationTrigger.WinAnim(animatorPlayer);
+            AnimationTrigger.DeadAnim(animatorEnemy);
+        }
+        else
+        {
+            AnimationTrigger.WinAnim(animatorEnemy);
+            AnimationTrigger.DeadAnim(animatorPlayer);
+        }
+    }
 
     // プレイヤーの攻撃
-    void Attack(float errorTime)
+    void AttackPlayer(float errorTime)
     {
         time = 0;
-        AnimationTrigger.AttackAnim(animator);
+        AnimationTrigger.AttackAnim(animatorPlayer);
+
+        // errorTimeの小数点2以下を切り捨てる処理
+        errorTime = Mathf.Floor(errorTime * 100);
+        errorTime *= 0.01f;
         Debug.Log($"誤差は{errorTime}秒です");
+
+        WinnerChecker(errorTime);
+    }
+
+    // エネミーの攻撃
+    void AttackEnemy()
+    {
+        AnimationTrigger.AttackAnim(animatorEnemy);
+    }
+
+    // 敵の初期化
+    void SetEnemy()
+    {
+        switch (stage)
+        {
+            case STAGE.EASY:
+                enemy = enemyStats.enemyData[0].enemyObj;
+                enemyReactionTime = enemyStats.enemyData[0].reactionTime;
+                break;
+            case STAGE.NORMAL:
+                enemy = enemyStats.enemyData[1].enemyObj;
+                enemyReactionTime = enemyStats.enemyData[1].reactionTime;
+                break;
+            case STAGE.HARD:
+                enemy = enemyStats.enemyData[2].enemyObj;
+                enemyReactionTime = enemyStats.enemyData[2].reactionTime;
+                break;
+        }
     }
 }
