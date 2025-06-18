@@ -18,4 +18,6 @@ MonoBehaviour:
   - enemyObj: {fileID: 529490432370619295, guid: 5946ddac08c8cef41b931de4d6e9a763, type: 3}
     reactionTime: 0.27
   - enemyObj: {fileID: 2478852987881327093, guid: 6dd557a60bbdbdb4c86e879eeeb1a3bf, type: 3}
+    reactionTime: 0.24
+  - enemyObj: {fileID: 2478852987881327093, guid: 6dd557a60bbdbdb4c86e879eeeb1a3bf, type: 3}
     reactionTime: 0.2

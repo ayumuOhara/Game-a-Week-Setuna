@@ -1,10 +1,13 @@
 using NUnit.Framework;
 using System.Collections;
 using UnityEngine;
+using UnityEngine.UIElements.Experimental;
 
 public class GameManager : MonoBehaviour
 {
     [SerializeField] EnemyStats enemyStats;
+
+    UIManager uiManager;
 
     [SerializeField] GameObject player;
     [SerializeField] GameObject enemy;
@@ -12,14 +15,15 @@ public class GameManager : MonoBehaviour
     Animator animatorPlayer;
     Animator animatorEnemy;
 
-    enum STAGE
+    public enum STAGE
     {
         EASY,
         NORMAL,
         HARD,
+        VERY_HARD,
     }
 
-    [SerializeField] STAGE stage = STAGE.EASY;
+    [SerializeField] STAGE level = STAGE.EASY;
 
     float rndTime = 0;
 
@@ -29,19 +33,24 @@ public class GameManager : MonoBehaviour
     const float WAIT_TIME_MIN = 1.2f;
     const float WAIT_TIME_MAX = 1.5f;
 
+    public bool isStart { get; private set; } = false;
+
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
         Application.targetFrameRate = 60;
 
         animatorPlayer = player.GetComponent<Animator>();
+        uiManager = GameObject.Find("UIManager").GetComponent<UIManager>();
     }
 
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.LeftShift))
+        if (Input.GetKeyDown(KeyCode.Space) && !isStart)
         {
             StartCoroutine(Timing());
+            isStart = true;
+            uiManager.TextSwicther(false);
             rndTime = Random.Range(WAIT_TIME_MIN, WAIT_TIME_MAX);
         }
     }
@@ -49,7 +58,6 @@ public class GameManager : MonoBehaviour
     // ゲームスタート
     IEnumerator Timing()
     {
-        SetEnemy();
         GameObject enemyObj = Instantiate(enemy);
         animatorEnemy = enemyObj.GetComponent<Animator>();
 
@@ -137,7 +145,7 @@ public class GameManager : MonoBehaviour
     // 敵の初期化
     void SetEnemy()
     {
-        switch (stage)
+        switch (level)
         {
             case STAGE.EASY:
                 enemy = enemyStats.enemyData[0].enemyObj;
@@ -151,6 +159,17 @@ public class GameManager : MonoBehaviour
                 enemy = enemyStats.enemyData[2].enemyObj;
                 enemyReactionTime = enemyStats.enemyData[2].reactionTime;
                 break;
+            case STAGE.VERY_HARD:
+                enemy = enemyStats.enemyData[3].enemyObj;
+                enemyReactionTime = enemyStats.enemyData[3].reactionTime;
+                break;
         }
+    }
+
+    // 難易度設定
+    public void SetLevel(STAGE level)
+    {
+        this.level = level;
+        SetEnemy();
     }
 }
