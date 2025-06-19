@@ -1,6 +1,7 @@
 using NUnit.Framework;
 using System.Collections;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UIElements.Experimental;
 
 public class GameManager : MonoBehaviour
@@ -28,12 +29,11 @@ public class GameManager : MonoBehaviour
     float rndTime = 0;
 
     float time = 0;
+    float reactionTime = 0;
     float enemyReactionTime = 0;
 
-    const float WAIT_TIME_MIN = 1.2f;
-    const float WAIT_TIME_MAX = 1.5f;
-
-    public bool isStart { get; private set; } = false;
+    const float WAIT_TIME_MIN = 2f;
+    const float WAIT_TIME_MAX = 5f;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -44,61 +44,70 @@ public class GameManager : MonoBehaviour
         uiManager = GameObject.Find("UIManager").GetComponent<UIManager>();
     }
 
-    void Update()
+    // ゲームスタート
+    void GameStart()
     {
-        if (Input.GetKeyDown(KeyCode.Space) && !isStart)
-        {
-            StartCoroutine(Timing());
-            isStart = true;
-            uiManager.TextSwicther(false);
-            rndTime = Random.Range(WAIT_TIME_MIN, WAIT_TIME_MAX);
-        }
+        StartCoroutine(Ready());
+        rndTime = Random.Range(WAIT_TIME_MIN, WAIT_TIME_MAX);
     }
 
-    // ゲームスタート
-    IEnumerator Timing()
+    // 準備
+    IEnumerator Ready()
     {
         GameObject enemyObj = Instantiate(enemy);
         animatorEnemy = enemyObj.GetComponent<Animator>();
 
         while (time < 3.0f)
         {
-            Debug.Log($"開始まで【{3 - time}】");
+            Debug.Log($"開始まで【{3 - (int)time}】");
             yield return new WaitForSeconds(1.0f);
             time += 1.0f;
         }
 
-        time = 0;
+        uiManager.ReadyTextFade();
+        StartCoroutine(Timing());
+    }
 
-        float signalTime = -1f; // 初期化（まだ「！」は出ていない）
+    // インゲーム
+    IEnumerator Timing()
+    {
+        time = 0;
+        float signalTime = -1f;
 
         while (true)
         {
             time += Time.deltaTime;
 
-            // 「！」が出るタイミング
             if (time >= rndTime && signalTime < 0)
             {
-                signalTime = Time.time; // 初回のみ記録
-                AttackEnemy();
+                uiManager.ActiveClickIcon(true);
+                signalTime = Time.time;
                 Debug.Log("クリック！！");
             }
 
             if (signalTime > 0)
             {
-                // 合図が出た後
+                float currentReactionTime = Time.time - signalTime;
+
+                // プレイヤーが反応する前に敵の反応時間を超えたら負け
+                if (currentReactionTime > enemyReactionTime)
+                {
+                    AttackEnemy();
+                    yield break;
+                }
+
                 if (Input.GetKeyDown(KeyCode.Space))
                 {
-                    AttackPlayer(Time.time - signalTime);
+                    AttackPlayer(currentReactionTime);
                     yield break;
                 }
             }
             else
             {
-                // 合図前に押したらおてつき
                 if (Input.GetKeyDown(KeyCode.Space))
                 {
-                    Debug.Log("おてつき！");
+                    uiManager.FastText();
+                    StartCoroutine(Retry());
                     yield break;
                 }
             }
@@ -107,39 +116,56 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    // 勝敗判定
-    void WinnerChecker(float errorTime)
+    // リトライ待機
+    IEnumerator Retry()
     {
-        if(errorTime <= enemyReactionTime)
+        yield return new WaitForSeconds(1);
+
+        uiManager.RetryTextFade();
+
+        while (true)
         {
-            AnimationTrigger.WinAnim(animatorPlayer);
-            AnimationTrigger.DeadAnim(animatorEnemy);
-        }
-        else
-        {
-            AnimationTrigger.WinAnim(animatorEnemy);
-            AnimationTrigger.DeadAnim(animatorPlayer);
+            if (Input.GetMouseButtonDown(0))
+            {
+                SceneManager.LoadScene("Main");
+                yield break;
+            }
+
+            yield return null;
         }
     }
 
     // プレイヤーの攻撃
     void AttackPlayer(float errorTime)
     {
+        uiManager.ActiveClickIcon(false);
+
         time = 0;
         AnimationTrigger.AttackAnim(animatorPlayer);
+        AnimationTrigger.WinAnim(animatorPlayer);
+        AnimationTrigger.DeadAnim(animatorEnemy);
+
+        uiManager.WinText();
 
         // errorTimeの小数点2以下を切り捨てる処理
         errorTime = Mathf.Floor(errorTime * 100);
         errorTime *= 0.01f;
         Debug.Log($"誤差は{errorTime}秒です");
 
-        WinnerChecker(errorTime);
+        StartCoroutine(Retry());
     }
 
     // エネミーの攻撃
     void AttackEnemy()
     {
+        uiManager.ActiveClickIcon(false);
+
         AnimationTrigger.AttackAnim(animatorEnemy);
+        AnimationTrigger.DeadAnim(animatorPlayer);
+        AnimationTrigger.WinAnim(animatorEnemy);
+
+        uiManager.LoseText();
+        StartCoroutine(Retry());
     }
 
     // 敵の初期化
@@ -171,5 +197,7 @@ public class GameManager : MonoBehaviour
     {
         this.level = level;
         SetEnemy();
+
+        GameStart();
     }
 }

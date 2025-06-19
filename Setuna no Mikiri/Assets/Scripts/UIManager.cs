@@ -3,7 +3,13 @@ using UnityEngine;
 
 public class UIManager : MonoBehaviour
 {
-    [SerializeField] GameObject startText;
+    [SerializeField] GameObject clickIcon;
+
+    [SerializeField] GameObject WinTextObj;
+    [SerializeField] GameObject LoseTextObj;
+    [SerializeField] GameObject FastTextObj;
+    [SerializeField] GameObject ReadyTextObj;
+    [SerializeField] GameObject RetryTextObj;
 
     [SerializeField] GameObject HomeWindow;
     [SerializeField] GameObject SelectWindow;
@@ -15,6 +21,19 @@ public class UIManager : MonoBehaviour
     {
         currentWindow = HomeWindow;
         currentWindow?.SetActive(true);
+
+        Initialize();
+    }
+
+    void Initialize()
+    {
+        clickIcon.SetActive(false);
+        WinTextObj.SetActive(false);
+        LoseTextObj.SetActive(false);
+        FastTextObj.SetActive(false);
+        ReadyTextObj.SetActive(true);
+        SelectWindow.SetActive(false);
+        PlayWindow.SetActive(false);
     }
 
     // スタートボタン
@@ -63,9 +82,43 @@ public class UIManager : MonoBehaviour
         currentWindow?.SetActive(true);
     }
 
-    // テキスト表示切り替え
-    public void TextSwicther(bool isActive)
+    // 準備テキストフェードアウト
+    public void ReadyTextFade()
     {
-        startText?.SetActive(isActive);
+        Animator animator = ReadyTextObj.GetComponent<Animator>();
+        animator.SetTrigger("FadeOut");
+    }
+
+    // リトライテキスト
+    public void RetryTextFade()
+    {
+        RetryTextObj.SetActive(true);
+
+        Animator animator = RetryTextObj.GetComponent<Animator>();
+        animator.SetTrigger("Fade");
+    }
+
+    // クリックタイミング表示
+    public void ActiveClickIcon(bool isActive)
+    {
+        clickIcon.SetActive(isActive);
+    }
+
+    // 勝利時テキスト
+    public void WinText()
+    {
+        WinTextObj.SetActive(true);
+    }
+
+    // 敗北時テキスト
+    public void LoseText()
+    {
+        LoseTextObj.SetActive(true);
+    }
+
+    // おてつき時テキスト
+    public void FastText()
+    {
+        FastTextObj.SetActive(true);
     }
 }
