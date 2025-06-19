@@ -1,4 +1,5 @@
 using TMPro;
+using UnityEditor;
 using UnityEngine;
 
 public class UIManager : MonoBehaviour
@@ -17,8 +18,12 @@ public class UIManager : MonoBehaviour
 
     GameObject currentWindow;
 
+    AudioManager audioManager;
+
     void Start()
     {
+        audioManager = GameObject.Find("AudioManager").GetComponent<AudioManager>();
+
         currentWindow = HomeWindow;
         currentWindow?.SetActive(true);
 
@@ -31,7 +36,7 @@ public class UIManager : MonoBehaviour
         WinTextObj.SetActive(false);
         LoseTextObj.SetActive(false);
         FastTextObj.SetActive(false);
-        ReadyTextObj.SetActive(true);
+        ReadyTextObj.SetActive(false);
         SelectWindow.SetActive(false);
         PlayWindow.SetActive(false);
     }
@@ -39,6 +44,7 @@ public class UIManager : MonoBehaviour
     // スタートボタン
     public void OnClickStart()
     {
+        audioManager.PlaySound("StartButtonSE");
         WindowTransition(SelectWindow);
     }
 
@@ -46,6 +52,7 @@ public class UIManager : MonoBehaviour
     public void OnClickSelect(int num)
     {
         GameManager gameManager = GameObject.Find("GameManager").GetComponent<GameManager>();
+        audioManager.PlaySound("SelectSE");
 
         switch (num)
         {
@@ -69,6 +76,7 @@ public class UIManager : MonoBehaviour
     // もどるボタン
     public void OnClickBack()
     {
+        audioManager.PlaySound("ButtonSE");
         WindowTransition(HomeWindow);
     }
 
@@ -80,6 +88,12 @@ public class UIManager : MonoBehaviour
         currentWindow?.SetActive(false);
         currentWindow = nextWindow;
         currentWindow?.SetActive(true);
+    }
+
+    // 準備テキスト
+    public void ActiveReadyText()
+    {
+        ReadyTextObj.SetActive(true);
     }
 
     // 準備テキストフェードアウト

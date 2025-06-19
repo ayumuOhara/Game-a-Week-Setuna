@@ -9,6 +9,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] EnemyStats enemyStats;
 
     UIManager uiManager;
+    AudioManager audioManager;
 
     [SerializeField] GameObject player;
     [SerializeField] GameObject enemy;
@@ -42,6 +43,7 @@ public class GameManager : MonoBehaviour
 
         animatorPlayer = player.GetComponent<Animator>();
         uiManager = GameObject.Find("UIManager").GetComponent<UIManager>();
+        audioManager = GameObject.Find("AudioManager").GetComponent<AudioManager>();
     }
 
     // ゲームスタート
@@ -54,6 +56,9 @@ public class GameManager : MonoBehaviour
     // 準備
     IEnumerator Ready()
     {
+        yield return new WaitForSeconds(1);
+        uiManager.ActiveReadyText();
+        audioManager.PlaySound("WindSE");
         GameObject enemyObj = Instantiate(enemy);
         animatorEnemy = enemyObj.GetComponent<Animator>();
 
@@ -81,6 +86,7 @@ public class GameManager : MonoBehaviour
             if (time >= rndTime && signalTime < 0)
             {
                 uiManager.ActiveClickIcon(true);
+                audioManager.PlaySound("StartSE");
                 signalTime = Time.time;
                 Debug.Log("クリック！！");
             }
@@ -139,6 +145,7 @@ public class GameManager : MonoBehaviour
     void AttackPlayer(float errorTime)
     {
         uiManager.ActiveClickIcon(false);
+        audioManager.PlaySound("AttackSE");
 
         time = 0;
         AnimationTrigger.AttackAnim(animatorPlayer);
@@ -159,6 +166,7 @@ public class GameManager : MonoBehaviour
     void AttackEnemy()
     {
         uiManager.ActiveClickIcon(false);
+        audioManager.PlaySound("EnemyAttackSE");
 
         AnimationTrigger.AttackAnim(animatorEnemy);
         AnimationTrigger.DeadAnim(animatorPlayer);
