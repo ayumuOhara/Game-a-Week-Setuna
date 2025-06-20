@@ -30,7 +30,6 @@ public class GameManager : MonoBehaviour
     float rndTime = 0;
 
     float time = 0;
-    float reactionTime = 0;
     float enemyReactionTime = 0;
 
     const float WAIT_TIME_MIN = 2f;
